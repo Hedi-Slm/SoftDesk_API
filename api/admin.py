@@ -14,3 +14,10 @@ class ContributorAdmin(admin.ModelAdmin):
     list_display = ('user', 'project', 'created_time')
     search_fields = ('user__username', 'project__title')
     list_filter = ('created_time',)
+
+
+@admin.register(Issue)
+class IssueAdmin(admin.ModelAdmin):
+    list_display = ('title', 'project', 'priority', 'status', 'author', 'assignee', 'created_time')
+    search_fields = ('title', 'project__title', 'author__username', 'assignee__username')
+    list_filter = ('priority', 'status', 'created_time')
