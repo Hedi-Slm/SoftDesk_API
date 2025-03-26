@@ -21,3 +21,10 @@ class IssueAdmin(admin.ModelAdmin):
     list_display = ('title', 'project', 'priority', 'status', 'author', 'assignee', 'created_time')
     search_fields = ('title', 'project__title', 'author__username', 'assignee__username')
     list_filter = ('priority', 'status', 'created_time')
+
+
+@admin.register(Comment)
+class CommentAdmin(admin.ModelAdmin):
+    list_display = ('issue', 'author', 'created_time')
+    search_fields = ('issue__title', 'author__username')
+    list_filter = ('created_time',)
