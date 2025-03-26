@@ -7,3 +7,10 @@ class ProjectAdmin(admin.ModelAdmin):
     list_display = ('title', 'type', 'author', 'created_time')
     search_fields = ('title', 'author__username')
     list_filter = ('type', 'created_time')
+
+
+@admin.register(Contributor)
+class ContributorAdmin(admin.ModelAdmin):
+    list_display = ('user', 'project', 'created_time')
+    search_fields = ('user__username', 'project__title')
+    list_filter = ('created_time',)
