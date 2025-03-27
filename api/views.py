@@ -27,8 +27,6 @@ class ProjectViewSet(viewsets.ModelViewSet):
         project = serializer.save(author=self.request.user)
         Contributor.objects.create(user=self.request.user, project=project)
 
-    def check_permissions(self, request):
-        super().check_permissions(request)
 
     @action(detail=True, methods=['post'])
     def add_contributor(self, request, pk=None):
