@@ -28,7 +28,7 @@ class CommentSerializer(serializers.ModelSerializer):
         read_only_fields = ['author', 'created_time']
 
 
-class IssueSerializer(serializers.ModelSerializer):
+class DetailedIssueSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
     assignee = UserSerializer(read_only=True)
     assignee_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), write_only=True, source='assignee',
@@ -40,6 +40,26 @@ class IssueSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'description', 'tag', 'priority', 'status', 'project', 'author', 'assignee',
                   'assignee_id', 'comments', 'created_time']
         read_only_fields = ['author', 'project', 'created_time']
+
+
+class IssueSerializer(serializers.ModelSerializer):
+    assignee_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), write_only=True, source='assignee',
+                                                     required=False, allow_null=True)
+
+    class Meta:
+        model = Issue
+        fields = ['id', 'title', 'description', 'tag', 'priority', 'status', 'project', 'created_time']
+        read_only_fields = ['project', 'created_time']
+
+    def validate_assignee_id(self, value):
+        """ Ensure that the assignee is a contributor of the project """
+        project = self.context.get('project')
+        is_contributor = Contributor.objects.filter(user=value, project=project).exists()
+
+        if not is_contributor:
+            raise serializers.ValidationError('User is not a contributor of this project')
+
+        return value
 
 
 class DetailedProjectSerializer(serializers.ModelSerializer):
