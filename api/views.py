@@ -71,7 +71,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
 class IssueViewSet(viewsets.ModelViewSet):
     serializer_class = IssueSerializer
     permission_classes = [permissions.IsAuthenticated, IsProjectContributor, IsAuthor]
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = ['project', 'assignee', 'author']
     ordering_fields = ['priority', 'status', 'tag']
 
@@ -91,3 +91,27 @@ class IssueViewSet(viewsets.ModelViewSet):
         serializer.context['project'] = project
 
         serializer.save(author=self.request.user, project=project)
+
+
+class CommentViewSet(viewsets.ModelViewSet):
+    serializer_class = CommentSerializer
+    permission_classes = [permissions.IsAuthenticated, IsProjectContributor, IsAuthor]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_fields = ['issue']
+    ordering_fields = ['created_time', 'issue']
+
+    def get_queryset(self):
+        # Only allow comments for issues in projects the user is a contributor of the project
+        return Comment.objects.filter(issue__project__contributors__user=self.request.user)
+
+    def perform_create(self, serializer):
+        issue_id = self.request.data.get('issue')
+        issue = get_object_or_404(Issue, id=issue_id)
+
+        serializer.save(author=self.request.user, issue=issue)
+
+    def destroy(self, request, *args, **kwargs):
+        return super().destroy(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        return super().update(request, *args, **kwargs)
