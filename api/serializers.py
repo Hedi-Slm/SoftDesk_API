@@ -48,7 +48,7 @@ class IssueSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Issue
-        fields = ['id', 'title', 'description', 'tag', 'priority', 'status', 'project', 'created_time']
+        fields = ['id', 'title', 'description', 'tag', 'priority', 'status', 'project', 'assignee_id', 'created_time']
         read_only_fields = ['project', 'created_time']
 
     def validate_assignee_id(self, value):
