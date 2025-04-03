@@ -18,6 +18,11 @@ class Project(models.Model):
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='authored_projects')
     created_time = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['title', 'author'], name='unique_project_title_per_author')
+        ]
+
     def __str__(self):
         return self.title
 
@@ -28,7 +33,9 @@ class Contributor(models.Model):
     created_time = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('user', 'project')
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'project'], name='unique_contributor')
+        ]
 
     def __str__(self):
         return f"{self.user.username} - {self.project.title}"
@@ -65,6 +72,15 @@ class Issue(models.Model):
                                  null=True, blank=True)
     created_time = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['title', 'project'], name='unique_issue_title_per_project'),
+            # Check that assignee is a contributor of the project
+            models.CheckConstraint(check=models.Q(assignee__isnull=True) | models.Q(
+                assignee__contributions__project=models.F('project')),
+                                   name='assignee_must_be_contributor'),
+        ]
+
     def __str__(self):
         return self.title
 
@@ -75,6 +91,11 @@ class Comment(models.Model):
     issue = models.ForeignKey(Issue, on_delete=models.CASCADE, related_name='comments')
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='authored_comments')
     created_time = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['author', 'issue', 'description'], name='unique_comment_per_user_per_issue')
+        ]
 
     def __str__(self):
         return f"Comment on {self.issue.title}"
