@@ -81,15 +81,23 @@ class IssueViewSet(viewsets.ModelViewSet):
         return super().get_serializer_class()
 
     def get_queryset(self):
-        return Issue.objects.all()
+        return Issue.objects.all().order_by('-created_time')
+
+    def get_serializer_context(self):
+        """ Add project to serializer context,so it can be used in validation """
+        context = super().get_serializer_context()
+        if self.request.method == 'POST':
+            project_id = self.request.data.get('project')
+            if project_id:
+                try:
+                    context['project'] = Project.objects.get(id=project_id)
+                except (Project.DoesNotExist, ValueError):
+                    pass
+        return context
 
     def perform_create(self, serializer):
-        """ Pass the project to the serializer, so we can check if the user is a contributor """
         project_id = self.request.data.get('project')
         project = get_object_or_404(Project, id=project_id)
-
-        serializer.context['project'] = project
-
         serializer.save(author=self.request.user, project=project)
 
 
@@ -102,16 +110,10 @@ class CommentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         # Only allow comments for issues in projects the user is a contributor of the project
-        return Comment.objects.filter(issue__project__contributors__user=self.request.user)
+        return Comment.objects.filter(issue__project__contributors__user=self.request.user).order_by('-created_time')
 
     def perform_create(self, serializer):
         issue_id = self.request.data.get('issue')
         issue = get_object_or_404(Issue, id=issue_id)
 
         serializer.save(author=self.request.user, issue=issue)
-
-    def destroy(self, request, *args, **kwargs):
-        return super().destroy(request, *args, **kwargs)
-
-    def update(self, request, *args, **kwargs):
-        return super().update(request, *args, **kwargs)
