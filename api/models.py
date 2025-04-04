@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.core.exceptions import ValidationError
 import uuid
 
 
@@ -75,11 +76,19 @@ class Issue(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=['title', 'project'], name='unique_issue_title_per_project'),
-            # Check that assignee is a contributor of the project
-            models.CheckConstraint(check=models.Q(assignee__isnull=True) | models.Q(
-                assignee__contributions__project=models.F('project')),
-                                   name='assignee_must_be_contributor'),
         ]
+
+    def clean(self):
+        """Enforce that the assignee must be a contributor to the same project."""
+        if self.assignee:
+            is_contributor = Contributor.objects.filter(user=self.assignee, project=self.project).exists()
+            if not is_contributor:
+                raise ValidationError({'assignee': 'The assignee must be a contributor to the project.'})
+
+    def save(self, *args, **kwargs):
+        """Call clean() before saving the model to enforce validation."""
+        self.clean()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.title
@@ -94,7 +103,8 @@ class Comment(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['author', 'issue', 'description'], name='unique_comment_per_user_per_issue')
+            models.UniqueConstraint(fields=['author_id', 'issue_id', 'description'],
+                                    name='unique_comment_per_user_per_issue')
         ]
 
     def __str__(self):
