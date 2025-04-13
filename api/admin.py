@@ -83,9 +83,10 @@ class ContributorAdmin(admin.ModelAdmin):
 
 @admin.register(Issue)
 class IssueAdmin(admin.ModelAdmin):
-    list_display = (
-    'title', 'project_link', 'priority', 'tag', 'status', 'author', 'assignee', 'comment_count', 'created_time')
-    search_fields = ('title', 'description', 'project__title', 'author__username', 'assignee__username')
+    list_display = ('title', 'project_link', 'priority', 'tag', 'status', 'author',
+                    'assignee', 'comment_count', 'created_time')
+    search_fields = ('title', 'description', 'project__title', 'author__username',
+                     'assignee__username')
     list_filter = ('priority', 'tag', 'status', 'created_time', 'project__type')
     readonly_fields = ('created_time',)
     autocomplete_fields = ['project', 'author', 'assignee']
